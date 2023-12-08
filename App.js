@@ -1,67 +1,94 @@
 import React, { useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
-import CheckBox from 'react-native-check-box'
+import CheckBox from 'react-native-check-box';
+import CustomTextInput from './CustomTextInput';
 
 export default function App() {
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
-  const [isManual, setIsManual] = useState(true);
+  const [isAdvanced, setIsAdvanced] = useState(true);
   const [payLoad, setPayLoad] = useState({});
   const [isPayLoadShown, setIsPayLoadShown] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [password, setPassword] = useState('');
+  const [serverAddress, setServerAddress] = useState('');
+  const [serverPath, setServerPath] = useState('');
+  const [port, setPort] = useState('');
 
   const data = [
     { label: 'Advanced', value: 'Advanced' },
     { label: 'Manual', value: 'Manual' }
   ];
 
-  const fields = [
-    { label: 'User Name: ', placeholder: 'name@example.com', isManual },
-    { label: 'Password: ', placeholder: 'Required', secureTextEntry: true, isManual },
-    { label: 'Server address: ', placeholder: 'example.com', isManual },
-    { label: 'Server path: ', placeholder: '/calendars/user/' }
-  ]
-
-  const onSubmit = () => {
+  const onSubmitAdvanced = () => {
     setIsError(false);
-    setIsPayLoadShown(true);
     validateEmail();
     validatePassword();
     validateAddress();
     validatePort();
     validateServerPath();
-    setPayLoad({ 'SSL: ': isChecked });
-    console.log(payLoad);
+    setPayLoad({
+      'User Name': userName,
+      'Password': password,
+      'Server Address': serverAddress,
+      'Server Path': serverPath,
+      'Port': port,
+      'SSL': isChecked
+    });
+    setIsPayLoadShown(true);
+  }
+
+  const onSubmitManual = () => {
+    setIsError(false);
+    validateEmail();
+    validatePassword();
+    validateAddress();
+    setPayLoad({
+      'User Name': userName,
+      'Password': password,
+      'Server Address': serverAddress,
+    });
+    setIsPayLoadShown(true);
+  }
+
+  const eraseData = () => {
+    setUserName('');
+    setPassword('');
+    setServerAddress('');
+    setServerPath('');
+    setPort('');
+    setIsChecked(false);
   }
 
   const validateEmail = () => {
-    if (!/\S+@\S+\.\S+/.test(payLoad['User Name: '])) {
+    if (!/\S+@\S+\.\S+/.test(userName)) {
       setIsError(true);
     }
   }
 
   const validatePassword = () => {
-    if (!payLoad['Password: ']) {
+    if (!password) {
       setIsError(true);
     }
   }
 
   const validateAddress = () => {
-    if (!payLoad['Server address: ']) {
+    if (!serverAddress) {
       setIsError(true);
     }
   }
 
   const validateServerPath = () => {
-    if (!/^[a-zA-Z0-9/]*$/.test(payLoad['Server path: '])) {
+    if (!/^[a-zA-Z0-9/]*$/.test(serverPath)) {
       setIsError(true);
     }
   }
 
   const validatePort = () => {
-    if (!(payLoad['Port: '] > 0 && payLoad['Port: '] < 3)) {
+    if (!(port > 0 && port < 3)) {
       setIsError(true);
     }
   }
@@ -74,10 +101,11 @@ export default function App() {
           style={styles.dropdownStyle}
           data={data}
           onChange={item => {
-            setValue(item.value);
-            setIsFocus(false);
-            setIsManual(item.value == "Manual" ? true : false)
-            setPayLoad({ 'accountType': item.value })
+            setValue(item.value)
+            setIsFocus(false)
+            setIsPayLoadShown(false)
+            setIsAdvanced(item.value == "Advanced" ? true : false)
+            eraseData()
           }}
           labelField="label"
           valueField="value"
@@ -85,44 +113,72 @@ export default function App() {
         />
       </View>
 
-      {fields.map((input, index) => (
-        (isManual && fields[index].isManual) || !isManual ? (
-          <View key={index} style={styles.textInputView}>
-            <Text style={styles.fieldTitleStyle}>{input.label}</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder={input.placeholder}
-              secureTextEntry={input.secureTextEntry}
-              onChangeText={(text) => {
-                setPayLoad(prevPayload => ({ ...prevPayload, [input.label]: text }))
-              }}
-            />
-          </View>
-        ) : null
-      ))}
-
-      {!isManual ? (
-        <View style={styles.textInputView}>
-          <Text style={styles.fieldTitleStyle}>Port: </Text>
-          <TextInput
-            style={styles.portTextInput}
+      <CustomTextInput
+        label={'User Name'}
+        placeholder={'required'}
+        value={userName}
+        onChangeText={(text) => {
+          setUserName(text)
+          setIsPayLoadShown(false)
+        }}
+      />
+      <CustomTextInput
+        label={'Password'}
+        placeholder={'required'}
+        value={password}
+        onChangeText={(text) => {
+          setPassword(text)
+          setIsPayLoadShown(false)
+        }}
+        isSecureTextEntry
+      />
+      <CustomTextInput
+        label={'Server Address'}
+        placeholder={'required'}
+        value={serverAddress}
+        onChangeText={(text) => {
+          setServerAddress(text)
+          setIsPayLoadShown(false)
+        }}
+      />
+      {isAdvanced && (
+        <>
+          <CustomTextInput
+            label={'Server Path'}
+            placeholder={'required'}
+            value={serverPath}
             onChangeText={(text) => {
-              setPayLoad({ 'Port: ': text })
+              setServerPath(text)
+              setIsPayLoadShown(false)
             }}
           />
-          <CheckBox
-            style={styles.checkBoxStyle}
-            onClick={() => {
-              setIsChecked(!isChecked)
-            }}
-            isChecked={isChecked}
-          />
-          <Text>Use SSL</Text>
-        </View>) : null}
+          <View style={styles.textInputView}>
+            <Text style={styles.fieldTitleStyle}>Port: </Text>
+            <TextInput
+              style={styles.portTextInput}
+              onChangeText={(text) => {
+                setPort(text)
+                setIsPayLoadShown(false)
+              }}
+              value={port}
+            />
+            <CheckBox
+              style={styles.checkBoxStyle}
+              onClick={() => {
+                setIsChecked(!isChecked)
+                setIsPayLoadShown(false)
+              }}
+              isChecked={isChecked}
+            />
+            <Text>Use SSL</Text>
+          </View>
+        </>
+      )}
+
 
       <Button
         title='Submit'
-        onPress={() => onSubmit()}
+        onPress={() => isAdvanced ? onSubmitAdvanced() : onSubmitManual()}
       />
 
       {isError ? <Text>The form is not valid!</Text> : null}
@@ -155,6 +211,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    width: '100%',
   },
   dropdownStyle: {
     borderColor: 'gray',
@@ -167,9 +224,11 @@ const styles = StyleSheet.create({
   portTextInput: {
     borderColor: 'gray',
     borderWidth: 1,
+    borderRadius: 8,
     marginLeft: 8,
     paddingLeft: 8,
-    width: 50
+    width: 50,
+
   },
   checkBoxStyle: {
     marginLeft: 16,
